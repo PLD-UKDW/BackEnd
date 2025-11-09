@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Mahasiswa {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  nim       String   @unique
+  provinsi String
+  angkatan Int
+  jalur_masuk String
+  status String //aktif, cuti, lulus
+  jenjang String
+  gender String
+  asal_sekolah String
+  ipk Float
+
+  fakultas_id Int
+  fakultas fakultas @relation(fields: [fakultas_id], references: [id])
+
+  prodi_id Int
+  prodi prodi @relation(fields: [prodi_id], references: [id])
+  
+  kategoriDisabilitas MahasiswaKategoriDisabilitas[]
+  
+  // banyak jenis → pivot
+  jenisDisabilitas MahasiswaJenisDisabilitas[]
+
+  @@map("mahasiswa")
+}
+
+model fakultas {
+  id       Int      @id @default(autoincrement())
+  nama     String
+  prodi prodi[]
+  Mahasiswa Mahasiswa[]
+
+  @@map("fakultas")
+}
+
+model prodi {
+  id       Int      @id @default(autoincrement())
+  nama     String
+  fakultas_id Int
+  fakultas fakultas @relation(fields: [fakultas_id], references: [id])
+  Mahasiswa Mahasiswa[]
+  @@map("prodi")
+}
+
+model jenisDisabilitas { //fisik,sensorik, mental
+  id       Int      @id @default(autoincrement())
+  jenis    String
+
+  kategoriDisabilitas kategoriDisabilitas[]
+  MahasiswaJenisDisabilitas MahasiswaJenisDisabilitas[]
+
+  @@map("jenis_disabilitas")
+}
+
+model kategoriDisabilitas { //tuna daksa, netra, rungu rungu
+  id       Int      @id @default(autoincrement())
+  kategori String
+  jenis_disabilitas_id Int?
+
+  jenisDisabilitas jenisDisabilitas? @relation(fields: [jenis_disabilitas_id], references: [id])
+  Mahasiswa MahasiswaKategoriDisabilitas[]
+
+  @@map("kategori_disabilitas")
+}
+
+model MahasiswaJenisDisabilitas {
+  id             Int         @id @default(autoincrement())
+  mahasiswa_id   Int
+  jenis_id       Int
+
+  mahasiswa      Mahasiswa    @relation(fields: [mahasiswa_id], references: [id])
+  jenis          jenisDisabilitas @relation(fields: [jenis_id], references: [id])
+
+  @@map("mahasiswa_jenis_disabilitas")
+}
+
+model MahasiswaKategoriDisabilitas {
+  id             Int         @id @default(autoincrement())
+  mahasiswa_id   Int
+  kategori_id    Int
+
+  mahasiswa      Mahasiswa    @relation(fields: [mahasiswa_id], references: [id])
+  kategori       kategoriDisabilitas @relation(fields: [kategori_id], references: [id])
+
+  @@map("mahasiswa_kategori_disabilitas")
+}
+
+model Berita {
+  id       Int      @id @default(autoincrement())
+  title     String
+  content   String
+  content_images String
+  category  String
+  title_images   String
+  createdAt DateTime @default(now())
+
+  @@map("berita")
+}
+
