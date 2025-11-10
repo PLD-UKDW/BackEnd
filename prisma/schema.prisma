@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,6 +6,61 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  ADMIN
+  PARTICIPANT
+}
+
+enum TestType {
+  DIGITAL_LITERACY
+  COLLEGE_READINESS
+}
+
+model User {
+  id                 Int       @id @default(autoincrement())
+  registrationNumber String    @unique
+  name               String
+  role               Role      @default(PARTICIPANT)
+  otp                String?
+  otpExpired         DateTime?
+  createdAt          DateTime  @default(now())
+  attempts           Attempt[]
+}
+
+model Test {
+  id          Int        @id @default(autoincrement())
+  title       String
+  type        TestType
+  description String?
+  questions   Question[]
+  attempts    Attempt[]  // <── relasi balik ke Attempt
+  createdAt   DateTime   @default(now())
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  text      String
+  options   Json     // array pilihan (stored as JSON)
+  answer    String?   // jawaban benar (tidak dikirim ke frontend)
+  questionType String @default("MULTIPLE_CHOICE")
+  testId    Int
+  test      Test       @relation(fields: [testId], references: [id])
+}
+
+model Attempt {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  testId        Int
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  score         Int?
+  answers       Json     // { "questionId": "selected option" }
+  user          User     @relation(fields: [userId], references: [id])
+  test          Test     @relation(fields: [testId], references: [id])
+  @@unique([userId, testId]) // 1 attempt per user per test
+}
+
 
 model Mahasiswa {
   id        Int      @id @default(autoincrement())

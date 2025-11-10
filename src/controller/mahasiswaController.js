@@ -26,7 +26,6 @@ const getAllMahasiswa = async (req, res) => {
     }
 };
 
-
 // Get mahasiswa by ID --> untuk admin aja
 const getMahasiswaById = async (req, res) => {
     const { id } = req.params;
@@ -44,7 +43,40 @@ const getMahasiswaById = async (req, res) => {
     }
 };
 
+const createMahasiswa = async (req, res, next) => {
+    try {
+        
+    } catch (error) {
+        next(error);
+    }
+};
+
+const updateMahasiswa = async (req, res) => {
+    // Implementation for updating an existing mahasiswa
+};
+
+const deleteMahasiswa = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const mahasiswa = await prisma.mahasiswa.findUnique({
+            where: { id: parseInt(id) },
+        });
+        if (!mahasiswa) {
+            return res.status(404).json({ error: 'Mahasiswa not found' });
+        }
+        await prisma.mahasiswa.delete({
+            where: { id: parseInt(id) },
+        });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete mahasiswa' });
+    }
+};
+
 module.exports = {
     getAllMahasiswa,
     getMahasiswaById,
+    createMahasiswa,
+    updateMahasiswa,
+    deleteMahasiswa,
 };

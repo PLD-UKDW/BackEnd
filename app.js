@@ -9,6 +9,7 @@ const routes =[
     require("./src/routes/statsFilteringRoutes"),
     require("./src/routes/beritaRoutes"),
     require("./src/routes/mahasiswaRoutes"),
+    require("./src/routes/loginRoutes"),
 ];
 
 routes.forEach(route => app.use(route));

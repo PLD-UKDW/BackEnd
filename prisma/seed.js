@@ -203,6 +203,75 @@ async function main() {
         });
     }
 
+    await prisma.user.createMany({
+    data: [
+            { registrationNumber: "ADMIN-0001", name: "Super Admin", role: "ADMIN" },
+            { registrationNumber: "PST-1001", name: "Peserta Satu", role: "PARTICIPANT" },
+            { registrationNumber: "PST-1002", name: "Peserta Dua", role: "PARTICIPANT" }
+        ]
+    });
+
+    // Digital Literacy test
+    await prisma.test.create({
+        data: {
+            title: "Digital Literacy Test",
+            type: "DIGITAL_LITERACY",
+            description: "Uji keterampilan dasar digital",
+            questions: {
+                create: [
+                    {
+                        text: "Apa itu browser?",
+                        options: ["Software untuk mengakses web", "Program antivirus", "Sistem operasi"],
+                        answer: "Software untuk mengakses web",
+                        questionType: "MULTIPLE_CHOICE",
+                    },
+                    {
+                        text: "Singkatan dari URL?",
+                        options: ["Uniform Resource Locator", "Universal Resource Link", "User Registered Link"],
+                        answer: "Uniform Resource Locator",
+                        questionType: "MULTIPLE_CHOICE",
+                    },
+                    {
+                        text: "Bagaimana cara melindungi data pribadi secara online?",
+                        options: [],
+                        answer: null,
+                        questionType: "ESSAY",
+                    }
+                ]
+            }
+        }
+    });
+
+    // College Readiness test
+    await prisma.test.create({
+        data: {
+            title: "College Readiness Test",
+            type: "COLLEGE_READINESS",
+            description: "Uji kesiapan akademik dasar",
+            questions: {
+                create: [
+                    {
+                        text: "Apa tujuan menulis esai?",
+                        options: ["Menyampaikan gagasan dan argumen", "Menggambar diagram", "Menyusun slides"],
+                        answer: "Menyampaikan gagasan dan argumen",
+                        questionType: "MULTIPLE_CHOICE",
+                    },
+                    {
+                        text: "Metode belajar efektif?",
+                        options: ["Interleaving & self-testing", "Baca sekali lalu selesai", "Hanya nonton video"],
+                        answer: "Interleaving & self-testing",
+                        questionType: "MULTIPLE_CHOICE",
+                    },
+                    {
+                        text: "Bagaimana metode belajar efektif menurut kamu?",
+                        options: [],
+                        answer: null,
+                        questionType: "ESSAY",
+                    },
+                ]
+            }
+        }
+    });
     console.log("✅ SEED BERHASIL TOTAL! DATA LENGKAP");
 }
 
