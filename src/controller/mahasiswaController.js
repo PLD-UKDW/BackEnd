@@ -45,14 +45,31 @@ const getMahasiswaById = async (req, res) => {
 
 const createMahasiswa = async (req, res, next) => {
     try {
-        
+        const { nama, nim, provinsi, angkatan, jalur_masuk, status, jenjang, gender, asal_sekolah, ipk, fakultas_id, prodi_id } = req.body;
+        const mahasiswa = await prisma.mahasiswa.create({
+            data: {
+                nama,
+                nim,
+                provinsi,
+                angkatan,
+                jalur_masuk,
+                status,
+                jenjang,
+                gender,
+                asal_sekolah,
+                ipk,
+                fakultas_id,
+                prodi_id
+            }
+        });
+        res.status(201).json(mahasiswa);
     } catch (error) {
         next(error);
     }
 };
 
 const updateMahasiswa = async (req, res) => {
-    // Implementation for updating an existing mahasiswa
+
 };
 
 const deleteMahasiswa = async (req, res) => {

@@ -4,10 +4,10 @@ const mahasiswaController = require('../controller/mahasiswaController');
 const isAdmin = require('../middleware/isAdmin');
 const auth = require('../middleware/auth');
 
-// Route to get all mahasiswa
 router.get('/api/mahasiswa', auth, isAdmin, mahasiswaController.getAllMahasiswa);
-
-// Route to get a mahasiswa by ID
 router.get('/api/mahasiswa/:id', auth, isAdmin, mahasiswaController.getMahasiswaById);
+router.post('/api/create-mahasiswa', auth, isAdmin, mahasiswaController.createMahasiswa);
+router.put('/api/update-mahasiswa/:id', auth, isAdmin, mahasiswaController.updateMahasiswa);
+router.delete('/api/delete-mahasiswa/:id', auth, isAdmin, mahasiswaController.deleteMahasiswa);
 
 module.exports = router;
