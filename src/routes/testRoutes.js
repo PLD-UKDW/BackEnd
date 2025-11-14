@@ -3,9 +3,10 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { listTests, getTest, submitTest, getStatus } = require('../controllers/testController');
 
-router.get('/', auth, listTests);
-router.get('/status', auth, getStatus);
-router.get('/:testId', auth, getTest);
-router.post('/:testId/submit', auth, submitTest);
+
+router.get('/api/list-tests', auth, listTests);
+router.get('/api/test-status', auth, getStatus);
+router.get('/api/:testId', auth, getTest);
+router.post('/api/:testId/submit', auth, submitTest);
 
 module.exports = router;

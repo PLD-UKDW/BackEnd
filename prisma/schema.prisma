@@ -153,12 +153,11 @@ model MahasiswaKategoriDisabilitas {
 model Berita {
   id       Int      @id @default(autoincrement())
   title     String
-  content   String
   content_images String
+  content   String
   category  String
-  title_images   String
+  isPublished Boolean @default(false)
   createdAt DateTime @default(now())
 
   @@map("berita")
 }
-

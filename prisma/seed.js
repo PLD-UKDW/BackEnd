@@ -251,16 +251,10 @@ async function main() {
             questions: {
                 create: [
                     {
-                        text: "Apa tujuan menulis esai?",
-                        options: ["Menyampaikan gagasan dan argumen", "Menggambar diagram", "Menyusun slides"],
-                        answer: "Menyampaikan gagasan dan argumen",
-                        questionType: "MULTIPLE_CHOICE",
-                    },
-                    {
-                        text: "Metode belajar efektif?",
-                        options: ["Interleaving & self-testing", "Baca sekali lalu selesai", "Hanya nonton video"],
-                        answer: "Interleaving & self-testing",
-                        questionType: "MULTIPLE_CHOICE",
+                        text: "Apa itu IPK?",
+                        options : [],
+                        answer: null,
+                        questionType: "ESSAY",
                     },
                     {
                         text: "Bagaimana metode belajar efektif menurut kamu?",

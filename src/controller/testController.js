@@ -4,7 +4,7 @@ const prisma = require('../prismaClient');
  * List semua test
  * GET /api/test
  */
-async function listTests(req, res) {
+const getAllTest = async (req, res) => {
   try {
     const tests = await prisma.test.findMany({ select: { id: true, title: true, type: true, description: true }});
     res.json(tests);
@@ -18,7 +18,7 @@ async function listTests(req, res) {
  * Ambil test & soal (tanpa jawaban benar)
  * GET /api/test/:testId
  */
-async function getTest(req, res) {
+const getTest = async (req, res) => {
   try {
     const testId = Number(req.params.testId);
     const test = await prisma.test.findUnique({ where: { id: testId }, include: { questions: true }});
@@ -42,7 +42,7 @@ async function getTest(req, res) {
  * POST /api/test/:testId/submit
  * body: { answers: { "<questionId>": "<option string>" } }
  */
-async function submitTest(req, res) {
+const submitTest = async (req, res) => {
   try {
     const userId = req.user.userId;
     const testId = Number(req.params.testId);
@@ -90,7 +90,7 @@ async function submitTest(req, res) {
  * Cek status: apakah user sudah menyelesaikan kedua test wajib
  * GET /api/test/status
  */
-async function getStatus(req, res) {
+const getStatus = async (req, res) => {
   try {
     const userId = req.user.userId;
     const attempts = await prisma.attempt.findMany({
@@ -109,4 +109,4 @@ async function getStatus(req, res) {
   }
 }
 
-module.exports = { listTests, getTest, submitTest, getStatus };
+module.exports = { getAllTest, getTest, submitTest, getStatus };
