@@ -45,7 +45,8 @@ const adminfilterMahasiswa = async (req, res) => {
             jenjang,
             asal_sekolah,
             ipk,
-            kategori_disabilitas
+            kategori_disabilitas,
+            fakultas,
         } = req.query;
 
         const where = {};
@@ -57,6 +58,10 @@ const adminfilterMahasiswa = async (req, res) => {
         if (status) where.status = status;
         if (jenjang) where.jenjang = jenjang;
         if (asal_sekolah) where.asal_sekolah = asal_sekolah;
+
+        if (fakultas){
+            where.fakultas = { nama: fakultas };
+        }
 
         if (ipk) {
             where.ipk = { gte: Number(ipk) };
@@ -112,6 +117,7 @@ const filterMahasiswa = async (req, res) => {
         const {
         provinsi,
         prodi,
+        fakultas,
         angkatan,
         jalur_masuk,
         gender,
@@ -132,6 +138,9 @@ const filterMahasiswa = async (req, res) => {
         if (jenjang) where.jenjang = jenjang;
         if (asal_sekolah) where.asal_sekolah = asal_sekolah;
         if (ipk) where.ipk = { gte: Number(ipk) };
+        if (fakultas) {
+            where.fakultas = { nama: fakultas };
+        }
 
         if (prodi) {
         where.prodi = { nama: prodi };
