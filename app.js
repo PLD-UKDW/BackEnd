@@ -1,31 +1,31 @@
-// const express = require('express')
-// const ENV = require('dotenv').config()
-// const app = express()
-// const bodyParser = require('body-parser');
-// const cors = require('cors');
+const express = require('express')
+const ENV = require('dotenv').config()
+const app = express()
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
-// app.use(cors());
-// app.use(bodyParser.json());
+app.use(cors());
+app.use(bodyParser.json());
 
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// const routes =[
-//     require("./src/routes/statsFilteringRoutes"),
-//     require("./src/routes/beritaRoutes"),
-//     require("./src/routes/mahasiswaRoutes"),
-//     require("./src/routes/loginRoutes"),
-//     require("./src/routes/testRoutes"),
-// ];
+const routes =[
+    require("./src/routes/statsFilteringRoutes"),
+    require("./src/routes/beritaRoutes"),
+    require("./src/routes/mahasiswaRoutes"),
+    require("./src/routes/loginRoutes"),
+    require("./src/routes/testRoutes"),
+];
 
-// routes.forEach(route => app.use(route));
+routes.forEach(route => app.use(route));
 
-// const PORT = process.env.PORT;
-// app.listen(PORT, () => {
-//     console.log(`listening on port ${PORT}`)
-// })
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
+    console.log(`listening on port ${PORT}`)
+})
 
-// module.exports = app
+module.exports = app
 
 // require("dotenv").config();
 // const express = require("express");
@@ -56,26 +56,28 @@
 // const PORT = process.env.PORT || 4000;
 // app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
 
-const express = require("express");
-const dotenv = require("dotenv").config();
-const cors = require("cors");
-const bodyParser = require("body-parser");
 
-const app = express();
 
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
+// const express = require("express");
+// const dotenv = require("dotenv").config();
+// const cors = require("cors");
+// const bodyParser = require("body-parser");
 
-// PREFIX ROUTES
-app.use("/api", require("./routes/loginRoutes"));
-app.use("/api/test", require("./routes/testRoutes"));
+// const app = express();
 
-// ➕ TAMBAHKAN INI
-app.use("/api/admin", require("./routes/adminRoutes"));
+// app.use(cors());
+// app.use(bodyParser.json());
+// app.use(express.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// // PREFIX ROUTES
+// app.use("/api", require("./routes/loginRoutes"));
+// app.use("/api/test", require("./routes/testRoutes"));
 
-module.exports = app;
+// // ➕ TAMBAHKAN INI
+// // app.use("/api/admin", require("./routes/adminRoutes"));
+
+// const PORT = process.env.PORT || 4000;
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// module.exports = app;
 
