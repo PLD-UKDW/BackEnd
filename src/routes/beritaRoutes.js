@@ -5,13 +5,13 @@ const beritaController = require('../controller/beritaController');
 const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
 
-router.post('/api/create-berita', upload.single('content_images'), beritaController.createBerita);
-router.get("/api/berita-admin", beritaController.getBeritaAdmin);
-router.get("/api/berita-admin/:id", beritaController.getBeritaByIdAdmin);
-router.put("/api/publish-berita/:id", beritaController.publishBerita);
-router.put("/api/unpublish-berita/:id", beritaController.unpublishBerita);
-router.put('/api/update-berita/:id', upload.single('content_images'), beritaController.updateBerita);
-router.delete("/api/delete-berita/:id", beritaController.deleteBerita);
+router.post('/api/create-berita', upload.single('content_images'), auth, isAdmin, beritaController.createBerita);
+router.get("/api/berita-admin", auth, isAdmin, beritaController.getBeritaAdmin);
+router.get("/api/berita-admin/:id", auth, isAdmin, beritaController.getBeritaByIdAdmin);
+router.put("/api/publish-berita/:id", auth, isAdmin, beritaController.publishBerita);
+router.put("/api/unpublish-berita/:id", auth, isAdmin, beritaController.unpublishBerita);
+router.put('/api/update-berita/:id', upload.single('content_images'), auth, isAdmin, beritaController.updateBerita);
+router.delete("/api/delete-berita/:id", auth, isAdmin, beritaController.deleteBerita);
 
 router.get("/api/berita-public", beritaController.getBeritaPublic);
 router.get("/api/berita-public/:id", beritaController.getBeritaByIdPublic);

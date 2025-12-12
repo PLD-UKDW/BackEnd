@@ -1,5 +1,6 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+// const { PrismaClient } = require("@prisma/client");
+// const prisma = new PrismaClient();
+const prisma = require("../utils/prisma");
 
 function roundIPK(ipk) {
     if (ipk >= 3.5) return 3.5;

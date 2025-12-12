@@ -1,5 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// const { PrismaClient } = require('@prisma/client');
+// const prisma = new PrismaClient();
+const prisma = require("../utils/prisma");
 
 async function getJenisFromKategori(kategoriArray) {
     if (kategoriArray.length === 1) {
@@ -16,6 +17,18 @@ async function getJenisFromKategori(kategoriArray) {
 
     return jenisGanda.id;
 }
+
+// async function resolveJenisDisabilitas(kategoriDB) {
+//     if (kategoriDB.length === 1) {
+//         return kategoriDB[0].jenisDisabilitas.id;
+//     }
+
+//     const jenisGanda = await prisma.jenisDisabilitas.findFirst({
+//         where: { jenis: "Ganda" }
+//     });
+
+//     return jenisGanda.id;
+// }
 
 const getAllMahasiswa = async (req, res) => {
     try {
@@ -377,10 +390,122 @@ const deleteMahasiswa = async (req, res) => {
     }
 };
 
+const getAllFakultas = async (req, res) => {
+    try {
+        const data = await prisma.fakultas.findMany({
+            orderBy: { nama: "asc" }
+        });
+
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memuat fakultas" });
+    }
+};
+
+const getProdiByFakultas = async (req, res) => {
+    try {
+        const fakultasId = Number(req.query.fakultasId);
+
+        if (!fakultasId) {
+            return res.status(400).json({ message: "fakultasId diperlukan" });
+        }
+
+        const data = await prisma.prodi.findMany({
+            where: { fakultas_id: fakultasId },
+            orderBy: { nama: "asc" }
+        });
+
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memuat prodi" });
+    }
+};
+
+// const addFakultas = async (req, res) => {
+//     try {
+//         const { nama } = req.body;
+//         if (!nama) {
+//         return res.status(400).json({ message: "Nama fakultas diperlukan" });
+//         }
+
+//         const fakultas = await prisma.fakultas.create({
+//         data: { nama },
+//         });
+
+//         res.status(201).json({ message: "Fakultas berhasil ditambahkan", fakultas });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ message: "Gagal menambahkan fakultas" });
+//     }
+// };
+
+// const addProdi = async (req, res) => {
+//     try {
+//         const { nama, fakultas_id } = req.body;
+
+//         if (!nama || !fakultas_id) {
+//         return res.status(400).json({ message: "Nama prodi dan fakultas_id diperlukan" });
+//         }
+
+//         const fakultas = await prisma.fakultas.findUnique({
+//         where: { id: Number(fakultas_id) },
+//         });
+
+//         if (!fakultas) {
+//         return res.status(404).json({ message: "Fakultas tidak ditemukan" });
+//         }
+
+//         const prodi = await prisma.prodi.create({
+//         data: {
+//             nama,
+//             fakultas_id: Number(fakultas_id),
+//         },
+//         });
+
+//         res.status(201).json({ message: "Prodi berhasil ditambahkan", prodi });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ message: "Gagal menambahkan prodi" });
+//     }
+// };
+
+const addFakultasProdi = async (req, res) => {
+    try {
+        const fakultasList = req.body;
+
+        if (!Array.isArray(fakultasList)) {
+        return res.status(400).json({ message: "Body harus berupa array fakultas" });
+        }
+
+        for (const fakultas of fakultasList) {
+        const createdFakultas = await prisma.fakultas.create({
+            data: {
+            nama: fakultas.nama,
+            prodi: {
+                create: fakultas.prodi.map((p) => ({ nama: p })),
+            },
+            },
+        });
+        }
+
+        res.status(201).json({ message: "Fakultas dan prodi berhasil ditambahkan" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal menambahkan fakultas dan prodi" });
+    }
+};
+
 module.exports = {
     getAllMahasiswa,
     getMahasiswaById,
     createMahasiswa,
     updateMahasiswa,
     deleteMahasiswa,
+    getAllFakultas,
+    getProdiByFakultas,
+    // addFakultas,
+    // addProdi
+    addFakultasProdi
 };
