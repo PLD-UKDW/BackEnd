@@ -16,6 +16,7 @@ const routes =[
     require("./src/routes/mahasiswaRoutes"),
     require("./src/routes/loginRoutes"),
     require("./src/routes/testRoutes"),
+    require("./src/routes/adminRoutes"),
 ];
 
 routes.forEach(route => app.use(route));
