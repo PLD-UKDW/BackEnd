@@ -1,8 +1,8 @@
 // src/routes/adminRoutes.js
 const express = require("express");
 const router = express.Router();
-const adminController = require("../controllers/adminController");
-const isAdmin = require("./../middleware/idAdmin");
+const adminController = require("../controller/adminController");
+const isAdmin = require("./../middleware/isAdmin");
 
 // TEST MANAGEMENT
 router.get("/tests", isAdmin, adminController.listTests);
