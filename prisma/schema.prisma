@@ -11,10 +11,6 @@ enum Role {
   PARTICIPANT
 }
 
-enum TestType {
-  DIGITAL_LITERACY
-  COLLEGE_READINESS
-}
 
 model User {
   id                 Int       @id @default(autoincrement())
@@ -27,38 +23,55 @@ model User {
   attempts           Attempt[]
 }
 
-model Test {
-  id          Int        @id @default(autoincrement())
-  title       String
-  type        TestType
-  description String?
-  questions   Question[]
-  attempts    Attempt[]  // <── relasi balik ke Attempt
-  createdAt   DateTime   @default(now())
+model TestType {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  tests     Test[]
+  createdAt DateTime  @default(now())
 }
+
+
+model Test {
+  id            Int              @id @default(autoincrement())
+  title         String
+  description   String?
+typeId        Int?
+type          TestType?   @relation(fields: [typeId], references: [id])
+
+  questions     Question[]
+  attempts      Attempt[]
+  createdAt     DateTime         @default(now())
+}
+
 
 model Question {
-  id        Int      @id @default(autoincrement())
-  text      String
-  options   Json     // array pilihan (stored as JSON)
-  answer    String?   // jawaban benar (tidak dikirim ke frontend)
+  id           Int      @id @default(autoincrement())
+  text         String
+  options      Json
+  answer       String?
   questionType String @default("MULTIPLE_CHOICE")
-  testId    Int
-  test      Test       @relation(fields: [testId], references: [id])
+  autoScore    Int?
+  testId       Int
+  test         Test       @relation(fields: [testId], references: [id])
+}
+model Attempt {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  testId       Int
+  answers      Json
+  autoScore    Int?
+  manualScore  Int?
+  finalScore   Int?
+  passStatus   String?
+  completedAt  DateTime @default(now())
+  gradedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+  test Test @relation(fields: [testId], references: [id])
+
+  @@unique([userId, testId])
 }
 
-model Attempt {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  testId        Int
-  startedAt     DateTime @default(now())
-  completedAt   DateTime?
-  score         Int?
-  answers       Json     // { "questionId": "selected option" }
-  user          User     @relation(fields: [userId], references: [id])
-  test          Test     @relation(fields: [testId], references: [id])
-  @@unique([userId, testId]) // 1 attempt per user per test
-}
 
 
 model Mahasiswa {

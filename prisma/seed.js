@@ -204,46 +204,65 @@ async function main() {
     ],
   });
 
-  // Digital Literacy test
+  // =======================
+  // 2. TEST TYPES (BARU)
+  // =======================
+  const digital = await prisma.testType.create({
+    data: { name: "DIGITAL_LITERACY" },
+  });
+
+  const college = await prisma.testType.create({
+    data: { name: "COLLEGE_READINESS" },
+  });
+
+  // =======================
+  // 3. DIGITAL LITERACY TEST
+  // =======================
   await prisma.test.create({
     data: {
       title: "Digital Literacy Test",
-      type: "DIGITAL_LITERACY",
       description: "Uji keterampilan dasar digital",
+      typeId: digital.id,
       questions: {
         create: [
           {
             text: "Apa itu browser?",
-            options: JSON.stringify(["Software untuk mengakses web", "Program antivirus", "Sistem operasi"]),
-            answer: "Software untuk mengakses web",
+            options: {
+              a: "Software untuk mengakses web",
+              b: "Program antivirus",
+              c: "Sistem operasi",
+            },
+            answer: "a",
+            questionType: "MCQ",
           },
           {
             text: "Singkatan dari URL?",
-            options: JSON.stringify(["Uniform Resource Locator", "Universal Resource Link", "User Registered Link"]),
-            answer: "Uniform Resource Locator",
+            options: {
+              a: "Uniform Resource Locator",
+              b: "Universal Resource Link",
+              c: "User Registered Link",
+            },
+            answer: "a",
+            questionType: "MCQ",
           },
-          // {
-          //     text: "Bagaimana cara melindungi data pribadi secara online?",
-          //     options: [],
-          //     answer: null,
-          //     questionType: "ESSAY",
-          // }
         ],
       },
     },
   });
 
-  // College Readiness test
+  // =======================
+  // 4. COLLEGE READINESS TEST
+  // =======================
   await prisma.test.create({
     data: {
       title: "College Readiness Test",
-      type: "COLLEGE_READINESS",
       description: "Uji kesiapan akademik dasar",
+      typeId: college.id,
       questions: {
         create: [
           {
             text: "Apa itu IPK?",
-            options: [],
+            options: [], // essay → kosongkan array
             answer: null,
             questionType: "ESSAY",
           },
@@ -257,9 +276,9 @@ async function main() {
       },
     },
   });
-  console.log("✅ SEED BERHASIL TOTAL! DATA LENGKAP");
-}
 
+  console.log("SEED BERHASIL!");
+}
 main()
   .catch((e) => {
     console.error(e);
