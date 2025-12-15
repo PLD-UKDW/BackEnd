@@ -32,7 +32,31 @@ async function getJenisFromKategori(kategoriArray) {
 
 const getAllMahasiswa = async (req, res) => {
     try {
+        const { status, angkatan, fakultasId, prodiId, search } = req.query;
+
+        const where = {};
+        if (status) {
+            where.status = String(status);
+        }
+        if (angkatan && !Number.isNaN(Number(angkatan))) {
+            where.angkatan = Number(angkatan);
+        }
+        if (fakultasId && !Number.isNaN(Number(fakultasId))) {
+            where.fakultas_id = Number(fakultasId);
+        }
+        if (prodiId && !Number.isNaN(Number(prodiId))) {
+            where.prodi_id = Number(prodiId);
+        }
+        if (search && String(search).trim().length > 0) {
+            const q = String(search).trim();
+            where.OR = [
+                { nama: { contains: q } },
+                { nim: { contains: q } },
+            ];
+        }
+
         const mahasiswa = await prisma.mahasiswa.findMany({
+            where,
             include: {
                 fakultas: {
                     select: {
@@ -87,7 +111,8 @@ const getAllMahasiswa = async (req, res) => {
 
         res.status(200).json(formatted);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch mahasiswa' });
+        console.error('getAllMahasiswa error:', error);
+        res.status(500).json({ message: 'Failed to fetch mahasiswa', detail: error?.message });
     }
 };
 
@@ -128,6 +153,8 @@ const getMahasiswaById = async (req, res) => {
             gender: mahasiswa.gender,
             asal_sekolah: mahasiswa.asal_sekolah,
             ipk: mahasiswa.ipk,
+            fakultas_id: mahasiswa.fakultas_id,
+            prodi_id: mahasiswa.prodi_id,
             fakultas: mahasiswa.fakultas?.nama || null,
             prodi: mahasiswa.prodi?.nama || null,
             jenisDisabilitas:
@@ -423,6 +450,80 @@ const getProdiByFakultas = async (req, res) => {
     }
 };
 
+const getAllKategoriDisabilitas = async (req, res) => {
+    try {
+        const data = await prisma.kategoriDisabilitas.findMany({
+            orderBy: { kategori: "asc" },
+            select: { id: true, kategori: true }
+        });
+        res.json(data.map((k) => k.kategori));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memuat kategori disabilitas" });
+    }
+};
+
+const getAllJenisDisabilitas = async (_req, res) => {
+    try {
+        const data = await prisma.jenisDisabilitas.findMany({
+            orderBy: { jenis: "asc" },
+            select: { id: true, jenis: true }
+        });
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memuat jenis disabilitas" });
+    }
+};
+
+const createKategoriDisabilitas = async (req, res) => {
+    try {
+        const { kategori, jenis_id } = req.body;
+
+        if (!kategori || !jenis_id) {
+            return res.status(400).json({ message: "kategori dan jenis_id wajib diisi" });
+        }
+
+        const jenis = await prisma.jenisDisabilitas.findUnique({ where: { id: Number(jenis_id) } });
+        if (!jenis) {
+            return res.status(404).json({ message: "Jenis disabilitas tidak ditemukan" });
+        }
+
+        const existing = await prisma.kategoriDisabilitas.findFirst({ where: { kategori } });
+        if (existing) {
+            return res.status(409).json({ message: "Kategori sudah ada" });
+        }
+
+        const created = await prisma.kategoriDisabilitas.create({
+            data: {
+                kategori,
+                jenis_disabilitas_id: Number(jenis_id)
+            },
+            select: { id: true, kategori: true }
+        });
+
+        res.status(201).json({ message: "Kategori disabilitas ditambahkan", kategori: created });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal menambahkan kategori disabilitas" });
+    }
+};
+
+const getAllAngkatan = async (req, res) => {
+    try {
+        const data = await prisma.mahasiswa.findMany({
+            select: { angkatan: true },
+            distinct: ['angkatan'],
+            orderBy: { angkatan: 'desc' }
+        });
+        const years = data.map((m) => m.angkatan);
+        res.json(years);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memuat daftar angkatan" });
+    }
+};
+
 // const addFakultas = async (req, res) => {
 //     try {
 //         const { nama } = req.body;
@@ -505,6 +606,10 @@ module.exports = {
     deleteMahasiswa,
     getAllFakultas,
     getProdiByFakultas,
+    getAllKategoriDisabilitas,
+    getAllJenisDisabilitas,
+    createKategoriDisabilitas,
+    getAllAngkatan,
     // addFakultas,
     // addProdi
     addFakultasProdi

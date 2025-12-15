@@ -165,11 +165,25 @@ model MahasiswaKategoriDisabilitas {
 model Berita {
   id       Int      @id @default(autoincrement())
   title     String
-  content_images String
-  content   String
-  category  String
+  content_images String @default("")
+  content   String @db.Text
+  // tanggal acara/publikasi (opsional)
+  tanggal   DateTime?
+  lokasi    String?
+  categoryId Int?
+  category  BeritaCategory? @relation(fields: [categoryId], references: [id])
   isPublished Boolean @default(false)
   createdAt DateTime @default(now())
 
   @@map("berita")
+}
+
+model BeritaCategory {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  berita    Berita[]
+
+  @@map("berita_category")
 }

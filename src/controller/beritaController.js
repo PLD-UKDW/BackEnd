@@ -15,16 +15,43 @@ const deleteFile = (filePath) => {
 
 const createBerita = async (req, res, next) => {
     try {
-        const { title, content, category } = req.body;
+        const { title, content, categoryId, tanggal, lokasi, isPublished } = req.body;
 
-        const image = req.file ? req.file.filename : null;
+        // Handle multiple images - combine all uploaded files into comma-separated string
+        let imageString = "";
+        if (req.files && req.files.length > 0) {
+            imageString = req.files.map(f => f.filename).join(',');
+        } else if (req.file) {
+            imageString = req.file.filename;
+        }
+
+        const categoryIdNum = categoryId ? Number(categoryId) : null;
+        if (categoryId && Number.isNaN(categoryIdNum)) {
+            return res.status(400).json({ message: "categoryId tidak valid" });
+        }
+
+        // Validate that category exists if provided
+        if (categoryIdNum) {
+            const category = await prisma.beritaCategory.findUnique({
+                where: { id: categoryIdNum },
+            });
+            if (!category) {
+                return res.status(400).json({ message: "Kategori tidak ditemukan" });
+            }
+        }
 
         const newBerita = await prisma.berita.create({
             data: {
                 title,
-                content_images: image,
+                content_images: imageString,
                 content,
-                category,
+                categoryId: categoryIdNum,
+                tanggal: tanggal ? new Date(tanggal) : null,
+                lokasi: lokasi || null,
+                isPublished: isPublished === 'true' || isPublished === true,
+            },
+            include: {
+                category: true,
             },
         });
 
@@ -41,7 +68,10 @@ const createBerita = async (req, res, next) => {
 const getBeritaAdmin = async (req, res, next) => {
     try {
         const berita = await prisma.berita.findMany({
-            orderBy: { createdAt: "desc" }
+            orderBy: { createdAt: "desc" },
+            include: {
+                category: true,
+            },
         });
 
         if(berita.length === 0){
@@ -60,6 +90,7 @@ const publishBerita = async (req, res, next) => {
         const berita = await prisma.berita.update({
             where: { id: Number(id) },
             data: { isPublished: true },
+            include: { category: true },
         });
         res.json({ message: "Berita berhasil dipublikasikan", data: berita });
     }catch(err){
@@ -73,6 +104,7 @@ const unpublishBerita = async (req, res, next) => {
         const berita = await prisma.berita.update({
             where: { id: Number(id) },
             data: { isPublished: false },
+            include: { category: true },
         });
         res.json({ message: "Berita berhasil disembunyikan", data: berita });
     }catch(err){
@@ -90,7 +122,11 @@ const getBeritaPublic = async (req, res, next) => {
                 title: true,
                 content: true,
                 content_images: true,
-                category: true,
+                category: {
+                    select: { id: true, name: true },
+                },
+                tanggal: true,
+                lokasi: true,
                 createdAt: true,
             }
         });
@@ -110,7 +146,8 @@ const getBeritaByIdAdmin = async (req, res, next) => {
         const { id } = req.params;
 
         const berita = await prisma.berita.findUnique({
-            where: { id: Number(id) }
+            where: { id: Number(id) },
+            include: { category: true },
         });
 
         if (!berita) {
@@ -137,17 +174,21 @@ const getBeritaByIdPublic = async (req, res, next) => {
                 title: true,
                 content: true,
                 content_images: true,
-                category: true,
+                category: {
+                    select: { id: true, name: true },
+                },
+                tanggal: true,
+                lokasi: true,
                 createdAt: true,
             }
 
         });
 
-        if(berita.length === 0){
+        if(!berita){
             return res.status(404).json({ message: "Berita tidak ditemukan" });
         }
 
-        res.json({ total: berita.length, data: berita });
+        res.json({ total: 1, data: berita });
     } catch (err) {
         res.status(500).json({ error: "Gagal mengambil berita" });
     }
@@ -156,7 +197,7 @@ const getBeritaByIdPublic = async (req, res, next) => {
 const updateBerita = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, content, category } = req.body;
+        const { title, content, categoryId, tanggal, lokasi, isPublished } = req.body;
 
         const berita = await prisma.berita.findUnique({ where: { id: Number(id) }});
         if (!berita) return res.status(404).json({ message: "Berita tidak ditemukan" });
@@ -170,16 +211,35 @@ const updateBerita = async (req, res, next) => {
             }
         }
 
+        const categoryIdNum = categoryId ? Number(categoryId) : null;
+        if (categoryId && Number.isNaN(categoryIdNum)) {
+            return res.status(400).json({ message: "categoryId tidak valid" });
+        }
+
+        // Validate that category exists if provided
+        if (categoryIdNum) {
+            const category = await prisma.beritaCategory.findUnique({
+                where: { id: categoryIdNum },
+            });
+            if (!category) {
+                return res.status(400).json({ message: "Kategori tidak ditemukan" });
+            }
+        }
+
         const updated = await prisma.berita.update({
             where: { id: Number(id) },
             data: {
                 title: title ?? berita.title,
                 content: content ?? berita.content,
-                category: category ?? berita.category,
+                categoryId: categoryId !== undefined ? categoryIdNum : berita.categoryId,
+                tanggal: tanggal !== undefined ? (tanggal ? new Date(tanggal) : null) : berita.tanggal,
+                lokasi: lokasi !== undefined ? (lokasi || null) : berita.lokasi,
+                isPublished: isPublished !== undefined ? (isPublished === 'true' || isPublished === true) : berita.isPublished,
                 content_images: newContentImage
                     ? newContentImage
                     : berita.content_images
             },
+            include: { category: true },
         });
         console.log("FILE DITERIMA:", req.file);
 console.log("FILES:", req.files);
@@ -213,4 +273,44 @@ const deleteBerita = async (req, res, next) => {
         res.status(500).json({ error: "Gagal menghapus berita" });
     }
 }
-module.exports = {createBerita, getBeritaAdmin, getBeritaPublic, getBeritaByIdAdmin, getBeritaByIdPublic, updateBerita, deleteBerita, publishBerita, unpublishBerita};
+
+// =============================
+// Kategori Berita
+// =============================
+const getBeritaCategories = async (_req, res) => {
+    try {
+        const categories = await prisma.beritaCategory.findMany({ orderBy: { name: "asc" } });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: "Gagal mengambil kategori" });
+    }
+};
+
+const createBeritaCategory = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) return res.status(400).json({ message: "Nama kategori wajib diisi" });
+
+        const exists = await prisma.beritaCategory.findFirst({ where: { name } });
+        if (exists) return res.status(400).json({ message: "Kategori sudah ada" });
+
+        const category = await prisma.beritaCategory.create({ data: { name } });
+        res.status(201).json(category);
+    } catch (err) {
+        res.status(500).json({ error: "Gagal membuat kategori" });
+    }
+};
+
+module.exports = {
+    createBerita,
+    getBeritaAdmin,
+    getBeritaPublic,
+    getBeritaByIdAdmin,
+    getBeritaByIdPublic,
+    updateBerita,
+    deleteBerita,
+    publishBerita,
+    unpublishBerita,
+    getBeritaCategories,
+    createBeritaCategory,
+};
