@@ -118,7 +118,51 @@ const verifyAdmin = async (req, res) => {
     }
 }
 
-module.exports = { login, verifyAdmin };
+const resendOtp = async (req, res) => {
+    try {
+        const { registrationNumber } = req.body;
+
+        if (!registrationNumber) {
+            return res.status(400).json({ message: "registrationNumber required" });
+        }
+
+        const user = await prisma.user.findUnique({ where: { registrationNumber } });
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (user.role !== "ADMIN") {
+            return res.status(403).json({ message: "Forbidden" });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                otp,
+                otpExpired: new Date(Date.now() + 5 * 60 * 1000),
+            },
+        });
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: "kkngondangukdw@gmail.com",
+            subject: "OTP Login Admin",
+            html: `
+                <h3>OTP Login Admin</h3>
+                <p>Gunakan kode berikut untuk login:</p>
+                <h2>${otp}</h2>
+                <p>Masa berlaku: 5 menit</p>
+            `,
+        });
+
+        return res.json({ message: "OTP re-sent" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { login, verifyAdmin, resendOtp };
 
 
 // const { PrismaClient } = require("@prisma/client");
