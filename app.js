@@ -3,12 +3,16 @@ const ENV = require('dotenv').config()
 const app = express()
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
 
 app.use(cors());
 app.use(bodyParser.json());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files (images) statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const routes =[
     require("./src/routes/statsFilteringRoutes"),
