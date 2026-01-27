@@ -40,11 +40,12 @@ const createBerita = async (req, res, next) => {
             }
         }
 
+        const cleanContent = (content || "").replace(/<img[^>]+src=["']data:[^"']+["'][^>]*>/gi, "");
         const newBerita = await prisma.berita.create({
             data: {
                 title,
                 content_images: imageString,
-                content,
+                content: cleanContent,
                 categoryId: categoryIdNum,
                 tanggal: tanggal ? new Date(tanggal) : null,
                 lokasi: lokasi || null,
@@ -240,11 +241,12 @@ const updateBerita = async (req, res, next) => {
             }
         }
 
+        const cleanContent = content !== undefined ? (content || "").replace(/<img[^>]+src=["']data:[^"']+["'][^>]*>/gi, "") : undefined;
         const updated = await prisma.berita.update({
             where: { id: Number(id) },
             data: {
                 title: title ?? berita.title,
-                content: content ?? berita.content,
+                content: cleanContent ?? berita.content,
                 categoryId: categoryId !== undefined ? categoryIdNum : berita.categoryId,
                 tanggal: tanggal !== undefined ? (tanggal ? new Date(tanggal) : null) : berita.tanggal,
                 lokasi: lokasi !== undefined ? (lokasi || null) : berita.lokasi,
