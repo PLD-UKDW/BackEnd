@@ -6,20 +6,14 @@ datasource db {
   provider = "mysql"
 }
 
-enum Role {
-  ADMIN
-  PARTICIPANT
-}
-
-
 model User {
   id                 Int       @id @default(autoincrement())
   registrationNumber String    @unique
   name               String
   role               Role      @default(PARTICIPANT)
+  createdAt          DateTime  @default(now())
   otp                String?
   otpExpired         DateTime?
-  createdAt          DateTime  @default(now())
   attempts           Attempt[]
 }
 
@@ -29,7 +23,6 @@ model TestType {
   tests     Test[]
   createdAt DateTime  @default(now())
 }
-
 
 model Test {
   id            Int              @id @default(autoincrement())
@@ -43,7 +36,6 @@ type          TestType?   @relation(fields: [typeId], references: [id])
   createdAt     DateTime         @default(now())
 }
 
-
 model Question {
   id           Int      @id @default(autoincrement())
   text         String
@@ -54,6 +46,7 @@ model Question {
   testId       Int
   test         Test       @relation(fields: [testId], references: [id])
 }
+
 model Attempt {
   id           Int      @id @default(autoincrement())
   userId       Int
@@ -73,108 +66,107 @@ model Attempt {
 }
 
 
-
 model Mahasiswa {
-  id        Int      @id @default(autoincrement())
-  nama      String
-  nim       String   @unique
-  provinsi String
-  angkatan Int
-  jalur_masuk String
-  status String //aktif, cuti, lulus
-  jenjang String
-  gender String
-  asal_sekolah String
-  ipk Float
-
-  fakultas_id Int
-  fakultas fakultas @relation(fields: [fakultas_id], references: [id])
-
-  prodi_id Int
-  prodi prodi @relation(fields: [prodi_id], references: [id])
-  
+  id                  Int                            @id @default(autoincrement())
+  provinsi            String
+  angkatan            Int
+  jalur_masuk         String
+  status              String
+  jenjang             String
+  gender              String
+  asal_sekolah        String
+  ipk                 Float
+  fakultas_id         Int
+  nama                String
+  nim                 String                         @unique
+  prodi_id            Int
+  fakultas            fakultas                       @relation(fields: [fakultas_id], references: [id])
+  prodi               prodi                          @relation(fields: [prodi_id], references: [id])
+  jenisDisabilitas    MahasiswaJenisDisabilitas[]
   kategoriDisabilitas MahasiswaKategoriDisabilitas[]
-  
-  // banyak jenis → pivot
-  jenisDisabilitas MahasiswaJenisDisabilitas[]
 
+  @@index([fakultas_id], map: "mahasiswa_fakultas_id_fkey")
+  @@index([prodi_id], map: "mahasiswa_prodi_id_fkey")
   @@map("mahasiswa")
 }
 
 model fakultas {
-  id       Int      @id @default(autoincrement())
-  nama     String
-  prodi prodi[]
+  id        Int         @id @default(autoincrement())
+  nama      String
   Mahasiswa Mahasiswa[]
+  prodi     prodi[]
 
   @@map("fakultas")
 }
 
 model prodi {
-  id       Int      @id @default(autoincrement())
-  nama     String
+  id          Int         @id @default(autoincrement())
+  nama        String
   fakultas_id Int
-  fakultas fakultas @relation(fields: [fakultas_id], references: [id])
-  Mahasiswa Mahasiswa[]
+  Mahasiswa   Mahasiswa[]
+  fakultas    fakultas    @relation(fields: [fakultas_id], references: [id])
+
+  @@index([fakultas_id], map: "prodi_fakultas_id_fkey")
   @@map("prodi")
 }
 
-model jenisDisabilitas { //fisik,sensorik, mental
-  id       Int      @id @default(autoincrement())
-  jenis    String
-
-  kategoriDisabilitas kategoriDisabilitas[]
+model jenisDisabilitas {
+  id                        Int                         @id @default(autoincrement())
+  jenis                     String
+  kategoriDisabilitas       kategoriDisabilitas[]
   MahasiswaJenisDisabilitas MahasiswaJenisDisabilitas[]
 
   @@map("jenis_disabilitas")
 }
 
-model kategoriDisabilitas { //tuna daksa, netra, rungu rungu
-  id       Int      @id @default(autoincrement())
-  kategori String
+model kategoriDisabilitas {
+  id                   Int                            @id @default(autoincrement())
+  kategori             String
   jenis_disabilitas_id Int?
+  jenisDisabilitas     jenisDisabilitas?              @relation(fields: [jenis_disabilitas_id], references: [id])
+  Mahasiswa            MahasiswaKategoriDisabilitas[]
 
-  jenisDisabilitas jenisDisabilitas? @relation(fields: [jenis_disabilitas_id], references: [id])
-  Mahasiswa MahasiswaKategoriDisabilitas[]
-
+  @@index([jenis_disabilitas_id], map: "kategori_disabilitas_jenis_disabilitas_id_fkey")
   @@map("kategori_disabilitas")
 }
 
 model MahasiswaJenisDisabilitas {
-  id             Int         @id @default(autoincrement())
-  mahasiswa_id   Int
-  jenis_id       Int
+  id           Int              @id @default(autoincrement())
+  mahasiswa_id Int
+  jenis_id     Int
+  jenis        jenisDisabilitas @relation(fields: [jenis_id], references: [id])
+  mahasiswa    Mahasiswa        @relation(fields: [mahasiswa_id], references: [id])
 
-  mahasiswa      Mahasiswa    @relation(fields: [mahasiswa_id], references: [id])
-  jenis          jenisDisabilitas @relation(fields: [jenis_id], references: [id])
-
+  @@index([jenis_id], map: "mahasiswa_jenis_disabilitas_jenis_id_fkey")
+  @@index([mahasiswa_id], map: "mahasiswa_jenis_disabilitas_mahasiswa_id_fkey")
   @@map("mahasiswa_jenis_disabilitas")
 }
 
 model MahasiswaKategoriDisabilitas {
-  id             Int         @id @default(autoincrement())
-  mahasiswa_id   Int
-  kategori_id    Int
+  id           Int                 @id @default(autoincrement())
+  mahasiswa_id Int
+  kategori_id  Int
+  kategori     kategoriDisabilitas @relation(fields: [kategori_id], references: [id])
+  mahasiswa    Mahasiswa           @relation(fields: [mahasiswa_id], references: [id])
 
-  mahasiswa      Mahasiswa    @relation(fields: [mahasiswa_id], references: [id])
-  kategori       kategoriDisabilitas @relation(fields: [kategori_id], references: [id])
-
+  @@index([kategori_id], map: "mahasiswa_kategori_disabilitas_kategori_id_fkey")
+  @@index([mahasiswa_id], map: "mahasiswa_kategori_disabilitas_mahasiswa_id_fkey")
   @@map("mahasiswa_kategori_disabilitas")
 }
 
 model Berita {
-  id       Int      @id @default(autoincrement())
-  title     String
-  content_images String @default("")
-  content   String @db.Text
-  // tanggal acara/publikasi (opsional)
-  tanggal   DateTime?
-  lokasi    String?
-  categoryId Int?
-  category  BeritaCategory? @relation(fields: [categoryId], references: [id])
-  isPublished Boolean @default(false)
-  createdAt DateTime @default(now())
+  id             Int             @id @default(autoincrement())
+  title          String
+  content        String          @db.Text
+  content_images String          @default("")
+  createdAt      DateTime        @default(now())
+  categoryId     Int?
+  isPublished    Boolean         @default(false)
+  lokasi         String?
+  tanggal        DateTime?
+  category       BeritaCategory? @relation(fields: [categoryId], references: [id])
 
+  @@index([categoryId], map: "berita_categoryId_fkey")
   @@map("berita")
 }
 
@@ -182,8 +174,12 @@ model BeritaCategory {
   id        Int      @id @default(autoincrement())
   name      String   @unique
   createdAt DateTime @default(now())
-
   berita    Berita[]
 
   @@map("berita_category")
+}
+
+enum Role {
+  ADMIN
+  PARTICIPANT
 }

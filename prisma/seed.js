@@ -206,7 +206,7 @@ async function main() {
   });
 
   // =======================
-  // 2. TEST TYPES (BARU)
+  // 6. TEST TYPES (BARU)
   // =======================
   const digital = await prisma.testType.upsert({
     where: { name: "DIGITAL_LITERACY" },
@@ -221,7 +221,7 @@ async function main() {
   });
 
   // =======================
-  // 3. DIGITAL LITERACY TEST
+  // 7. DIGITAL LITERACY TEST
   // =======================
   await prisma.test.create({
     data: {
@@ -256,7 +256,7 @@ async function main() {
   });
 
   // =======================
-  // 4. COLLEGE READINESS TEST
+  // 8. COLLEGE READINESS TEST
   // =======================
   await prisma.test.create({
     data: {

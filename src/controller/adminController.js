@@ -1,4 +1,3 @@
-
 // src/controllers/adminController.js
 const prisma = require("../utils/prisma");
 
@@ -58,7 +57,6 @@ exports.createTest = async (req, res) => {
   }
 };
 
-
 // DELETE TEST
 exports.deleteTest = async (req, res) => {
   try {
@@ -97,7 +95,6 @@ exports.deleteTest = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 // =============================================
 // ------------- QUESTION MANAGEMENT ------------
