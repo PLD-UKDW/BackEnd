@@ -54,5 +54,6 @@ router.get("/api/admin/attempts", adminController.listAttempts);
 router.get("/api/admin/attempts/:attemptId", adminController.getAttemptDetail);
 router.post("/api/admin/attempts/:attemptId/score", adminController.giveScore);
 router.post("/api/admin/attempts/:attemptId/status", adminController.setPassStatus);
+router.post("/api/admin/attempts/:attemptId/essay-score", adminController.scoreEssayQuestion);
 
 module.exports = router;

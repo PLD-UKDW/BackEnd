@@ -52,10 +52,15 @@ model Attempt {
   userId       Int
   testId       Int
   answers      Json
+
   autoScore    Int?
   manualScore  Int?
   finalScore   Int?
   passStatus   String?
+  
+    essayScores  Json?   // ✅ TAMBAHAN INI
+
+
   completedAt  DateTime @default(now())
   gradedAt     DateTime?
 

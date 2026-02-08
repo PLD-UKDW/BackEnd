@@ -342,3 +342,53 @@ exports.debugCreateAttempt = async (req, res) => {
     res.status(500).json({ error: "Failed to create dummy attempt" });
   }
 };
+
+
+exports.scoreEssayQuestion = async (req, res) => {
+  try {
+    const attemptId = Number(req.params.attemptId);
+    const { questionId, score } = req.body;
+
+    const attempt = await prisma.attempt.findUnique({
+      where: { id: attemptId },
+    });
+
+    if (!attempt) {
+      return res.status(404).json({ message: "Attempt not found" });
+    }
+
+    const existingScores = attempt.essayScores || {};
+
+    const updatedScores = {
+      ...existingScores,
+      [questionId]: Number(score),
+    };
+
+    const totalManual = Object.values(updatedScores).reduce(
+      (sum, s) => sum + Number(s),
+      0
+    );
+
+    const finalScore =
+      Number(attempt.autoScore || 0) + totalManual;
+
+    const updated = await prisma.attempt.update({
+      where: { id: attemptId },
+      data: {
+        essayScores: updatedScores,
+        manualScore: totalManual,
+        finalScore,
+        passStatus: finalScore >= 70 ? "PASS" : "FAIL",
+        gradedAt: new Date(),
+      },
+    });
+
+    res.json({
+      message: "Essay score saved",
+      updated,
+    });
+  } catch (err) {
+    console.error("scoreEssayQuestion:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
