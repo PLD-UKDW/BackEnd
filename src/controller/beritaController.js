@@ -197,26 +197,53 @@ const getBeritaByIdPublic = async (req, res, next) => {
 const updateBerita = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, content, categoryId, tanggal, lokasi, isPublished } = req.body;
+        const { title, content, categoryId, tanggal, lokasi, isPublished, keep_existing_images } = req.body;
 
         const berita = await prisma.berita.findUnique({ where: { id: Number(id) }});
         if (!berita) return res.status(404).json({ message: "Berita tidak ditemukan" });
 
-        const newContentImage = req.file ? req.file.filename : null;
+        const existing = (berita.content_images || "")
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
 
-        if (newContentImage && berita.content_images) {
-            const oldPath = path.join(__dirname, "..", "..", "uploads", "berita", berita.content_images);
-            if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
+        let keepList = [];
+        if (typeof keep_existing_images === 'string' && keep_existing_images.length > 0) {
+            try {
+                if (keep_existing_images.trim().startsWith('[')) {
+                    keepList = JSON.parse(keep_existing_images).map(s => String(s).trim()).filter(Boolean);
+                } else {
+                    keepList = keep_existing_images.split(',').map(s => s.trim()).filter(Boolean);
+                }
+            } catch {
+                keepList = keep_existing_images.split(',').map(s => s.trim()).filter(Boolean);
             }
         }
+
+        const newImages = Array.isArray(req.files) && req.files.length > 0
+            ? req.files.map(f => f.filename)
+            : (req.file ? [req.file.filename] : []);
+
+        let finalImages = existing;
+        if (newImages.length > 0) {
+            finalImages = [...newImages];
+        } else if (keepList.length > 0) {
+            finalImages = [...keepList];
+        }
+
+        const toDelete = existing.filter(x => !finalImages.includes(x));
+        toDelete.forEach(file => {
+            const oldPath = path.join(__dirname, "..", "..", "uploads", "berita", file);
+            if (fs.existsSync(oldPath)) {
+                try { fs.unlinkSync(oldPath); } catch {}
+            }
+        });
 
         const categoryIdNum = categoryId ? Number(categoryId) : null;
         if (categoryId && Number.isNaN(categoryIdNum)) {
             return res.status(400).json({ message: "categoryId tidak valid" });
         }
 
-        // Validate that category exists if provided
         if (categoryIdNum) {
             const category = await prisma.beritaCategory.findUnique({
                 where: { id: categoryIdNum },
@@ -235,15 +262,10 @@ const updateBerita = async (req, res, next) => {
                 tanggal: tanggal !== undefined ? (tanggal ? new Date(tanggal) : null) : berita.tanggal,
                 lokasi: lokasi !== undefined ? (lokasi || null) : berita.lokasi,
                 isPublished: isPublished !== undefined ? (isPublished === 'true' || isPublished === true) : berita.isPublished,
-                content_images: newContentImage
-                    ? newContentImage
-                    : berita.content_images
+                content_images: finalImages.length > 0 ? finalImages.join(',') : null,
             },
             include: { category: true },
         });
-        console.log("FILE DITERIMA:", req.file);
-console.log("FILES:", req.files);
-
 
         res.json({ message: "Berita berhasil diupdate", data: updated });
 
