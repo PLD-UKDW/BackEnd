@@ -58,7 +58,8 @@ model Attempt {
   finalScore   Int?
   passStatus   String?
   
-    essayScores  Json?   // ✅ TAMBAHAN INI
+    essayScores  Json?  
+      mcScores     Json? 
 
 
   completedAt  DateTime @default(now())

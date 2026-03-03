@@ -392,3 +392,61 @@ exports.scoreEssayQuestion = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// ========================= MC/RADIO/CHECKBOX SCORING =========================
+exports.scoreMCQuestion = async (req, res) => {
+  try {
+    const attemptId = Number(req.params.attemptId);
+    const { questionId, score } = req.body;
+
+    const attempt = await prisma.attempt.findUnique({
+      where: { id: attemptId },
+    });
+
+    if (!attempt) {
+      return res.status(404).json({ message: "Attempt not found" });
+    }
+
+    const existingMcScores = attempt.mcScores || {};
+    const existingEssayScores = attempt.essayScores || {};
+
+    const updatedMcScores = {
+      ...existingMcScores,
+      [questionId]: Number(score),
+    };
+
+    // Total dari essay scores
+    const totalEssay = Object.values(existingEssayScores).reduce(
+      (sum, s) => sum + Number(s),
+      0
+    );
+
+    // Total dari mc manual scores
+    const totalMc = Object.values(updatedMcScores).reduce(
+      (sum, s) => sum + Number(s),
+      0
+    );
+
+    const totalManual = totalEssay + totalMc;
+    const finalScore = Number(attempt.autoScore || 0) + totalManual;
+
+    const updated = await prisma.attempt.update({
+      where: { id: attemptId },
+      data: {
+        mcScores: updatedMcScores,
+        manualScore: totalManual,
+        finalScore,
+        passStatus: finalScore >= 70 ? "PASS" : "FAIL",
+        gradedAt: new Date(),
+      },
+    });
+
+    res.json({
+      message: "MC score saved",
+      updated,
+    });
+  } catch (err) {
+    console.error("scoreMCQuestion:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
