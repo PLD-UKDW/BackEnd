@@ -2,6 +2,28 @@ const prisma = require("../src/utils/prisma");
 
 async function main() {
   // =============================================
+  // CLEANUP: Hapus data lama untuk mencegah duplikasi
+  // =============================================
+  console.log("🧹 Membersihkan database...");
+  
+  // Delete dalam urutan terbalik (reverse foreign key dependencies)
+  await prisma.attempt.deleteMany({});
+  await prisma.question.deleteMany({});
+  await prisma.test.deleteMany({});
+  await prisma.testType.deleteMany({});
+  await prisma.mahasiswaKategoriDisabilitas.deleteMany({});
+  await prisma.mahasiswaJenisDisabilitas.deleteMany({});
+  await prisma.mahasiswa.deleteMany({});
+  await prisma.kategoriDisabilitas.deleteMany({});
+  await prisma.jenisDisabilitas.deleteMany({});
+  await prisma.prodi.deleteMany({});
+  await prisma.fakultas.deleteMany({});
+  await prisma.berita.deleteMany({});
+  await prisma.beritaCategory.deleteMany({});
+  
+  console.log("✅ Database dibersihkan\n");
+
+  // =============================================
   // 1. FAKULTAS & PRODI
   // =============================================
   const fakultasData = [
@@ -113,7 +135,7 @@ async function main() {
   // 4. DATA MAHASISWA (10 awal + 5 tambahan)
   // =============================================
   const mahasiswaSeed = [
-    { nama: "Agus Saputra", nim: "22010001", provinsi: "DIY", angkatan: 2020, jalur: "SNMPTN", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 1 Bandung" },
+    { nama: "Agus Saputra", nim: "22010001", provinsi: "DI Yogyakarta", angkatan: 2020, jalur: "SNMPTN", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 1 Bandung" },
     { nama: "Bella Sari", nim: "22010002", provinsi: "Jawa Tengah", angkatan: 2021, jalur: "SBMPTN", status: "cuti", jenjang: "S1", gender: "P", sekolah: "SMA 3 Semarang" },
     { nama: "Citra Lestari", nim: "22010003", provinsi: "Jawa Barat", angkatan: 2019, jalur: "Mandiri", status: "aktif", jenjang: "S1", gender: "P", sekolah: "SMA Al-Azhar" },
     { nama: "Dimas Rahman", nim: "22010004", provinsi: "Banten", angkatan: 2022, jalur: "SNMPTN", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 7 Tangerang" },
@@ -127,7 +149,7 @@ async function main() {
     // ✅ 5 mahasiswa tambahan (kategori tunggal)
     { nama: "Kevin Santoso", nim: "22010011", provinsi: "Bali", angkatan: 2021, jalur: "SBMPTN", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 4 Denpasar", fixedKategori: "Tuna Rungu" },
     { nama: "Maria Febrina", nim: "22010012", provinsi: "Kalimantan Barat", angkatan: 2022, jalur: "SNMPTN", status: "aktif", jenjang: "S1", gender: "P", sekolah: "SMA 1 Pontianak", fixedKategori: "Skizofrenia" },
-    { nama: "Rian Aditya", nim: "22010013", provinsi: "NTB", angkatan: 2020, jalur: "Mandiri", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 3 Mataram", fixedKategori: "Tuna Daksa" },
+    { nama: "Rian Aditya", nim: "22010013", provinsi: "Nusa Tenggara Barat", angkatan: 2020, jalur: "Mandiri", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 3 Mataram", fixedKategori: "Tuna Daksa" },
     { nama: "Selvi Anggraini", nim: "22010014", provinsi: "Kalimantan Selatan", angkatan: 2023, jalur: "SBMPTN", status: "aktif", jenjang: "S1", gender: "P", sekolah: "SMA 2 Banjarmasin", fixedKategori: "Tuna Grahita Ringan" },
     { nama: "Yusuf Hamdani", nim: "22010015", provinsi: "Sulawesi Selatan", angkatan: 2021, jalur: "Mandiri", status: "aktif", jenjang: "S1", gender: "L", sekolah: "SMA 5 Makassar", fixedKategori: "Low Vision" },
   ];
