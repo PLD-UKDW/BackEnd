@@ -34,7 +34,6 @@ const adminController = require("../controller/adminController");
 const auth = require("../middleware/auth");
 const isAdmin = require("../middleware/isAdmin");
 
-// SEMUA ROUTE ADMIN WAJIB LOGIN + ADMIN
 router.use(auth, isAdmin);
 
 // TEST MANAGEMENT

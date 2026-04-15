@@ -12,8 +12,11 @@ router.delete('/api/delete-mahasiswa/:id', auth, isAdmin, mahasiswaController.de
 router.get('/api/fakultas', mahasiswaController.getAllFakultas);
 router.get('/api/prodi', mahasiswaController.getProdiByFakultas);
 router.get('/api/kategori-disabilitas', mahasiswaController.getAllKategoriDisabilitas);
+router.get('/api/kategori-disabilitas-admin', auth, isAdmin, mahasiswaController.getAllKategoriDisabilitasAdmin);
 router.get('/api/jenis-disabilitas', mahasiswaController.getAllJenisDisabilitas);
 router.post('/api/kategori-disabilitas', auth, isAdmin, mahasiswaController.createKategoriDisabilitas);
+router.put('/api/kategori-disabilitas/:id', auth, isAdmin, mahasiswaController.updateKategoriDisabilitas);
+router.delete('/api/kategori-disabilitas/:id', auth, isAdmin, mahasiswaController.deleteKategoriDisabilitas);
 router.get('/api/angkatan', mahasiswaController.getAllAngkatan);
 // router.post('/api/create-fakultas', auth, isAdmin, mahasiswaController.addFakultas);
 // router.post('/api/create-prodi', auth, isAdmin, mahasiswaController.addProdi);

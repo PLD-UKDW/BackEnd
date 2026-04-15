@@ -14,6 +14,8 @@ router.put('/api/update-berita/:id', upload.array('content_images', 10), auth, i
 router.delete("/api/delete-berita/:id", auth, isAdmin, beritaController.deleteBerita);
 router.get("/api/berita-categories", beritaController.getBeritaCategories);
 router.post("/api/berita-categories", auth, isAdmin, beritaController.createBeritaCategory);
+router.put("/api/berita-categories/:id", auth, isAdmin, beritaController.updateBeritaCategory);
+router.delete("/api/berita-categories/:id", auth, isAdmin, beritaController.deleteBeritaCategory);
 router.get("/api/berita-public", beritaController.getBeritaPublic);
 router.get("/api/berita-public/:id", beritaController.getBeritaByIdPublic);
 

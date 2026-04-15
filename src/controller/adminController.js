@@ -1,9 +1,6 @@
 // src/controllers/adminController.js
 const prisma = require("../utils/prisma");
 
-// =============================================
-// -------------- TEST MANAGEMENT --------------
-// =============================================
 exports.listTests = async (req, res) => {
   try {
     const tests = await prisma.test.findMany({
@@ -34,7 +31,6 @@ exports.getTestDetail = async (req, res) => {
   }
 };
 
-// CREATE TEST
 exports.createTest = async (req, res) => {
   try {
     const { title, typeId, description } = req.body;
@@ -57,7 +53,6 @@ exports.createTest = async (req, res) => {
   }
 };
 
-// DELETE TEST
 exports.deleteTest = async (req, res) => {
   try {
     const testId = Number(req.params.testId);
@@ -70,21 +65,18 @@ exports.deleteTest = async (req, res) => {
       return res.status(404).json({ message: "Test not found" });
     }
 
-    // Hapus semua attempts untuk test ini
     await prisma.attempt.deleteMany({
       where: {
         testId: testId,
       },
     });
 
-    // Hapus semua questions untuk test ini
     await prisma.question.deleteMany({
       where: {
         testId: testId,
       },
     });
 
-    // Baru hapus test-nya
     await prisma.test.delete({
       where: { id: testId },
     });
@@ -96,9 +88,6 @@ exports.deleteTest = async (req, res) => {
   }
 };
 
-// =============================================
-// ------------- QUESTION MANAGEMENT ------------
-// =============================================
 exports.addQuestion = async (req, res) => {
   try {
     const { testId } = req.params;
@@ -163,7 +152,6 @@ exports.deleteAllQuestions = async (req, res) => {
   }
 };
 
-// EDIT QUESTION
 exports.updateQuestion = async (req, res) => {
   try {
     const questionId = Number(req.params.questionId);
@@ -198,11 +186,6 @@ exports.updateQuestion = async (req, res) => {
   }
 };
 
-// =============================================
-// --------------- ATTEMPT MANAGEMENT ----------
-// =============================================
-
-// List semua attempt
 exports.listAttempts = async (req, res) => {
   try {
     const attempts = await prisma.attempt.findMany({
@@ -219,7 +202,6 @@ exports.listAttempts = async (req, res) => {
   }
 };
 
-// Get detail attempt
 exports.getAttemptDetail = async (req, res) => {
   try {
     const attemptId = Number(req.params.attemptId);
@@ -242,12 +224,6 @@ exports.getAttemptDetail = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-// ========================= MANUAL SCORING ADMIN =========================
-//
-// Hanya digunakan untuk COLLEGE_READINESS
-// Mengisi manualScore, finalScore, dan passStatus
-// ========================================================================
 
 exports.giveScore = async (req, res) => {
   try {
@@ -289,10 +265,6 @@ exports.giveScore = async (req, res) => {
   }
 };
 
-// ========================= MANUAL PASS/FAIL SETTING ======================
-// Admin override PASS / FAIL
-// =========================================================================
-
 exports.setPassStatus = async (req, res) => {
   try {
     const attemptId = Number(req.params.attemptId);
@@ -315,7 +287,6 @@ exports.setPassStatus = async (req, res) => {
   }
 };
 
-// DEBUG: Admin create dummy attempt
 exports.debugCreateAttempt = async (req, res) => {
   try {
     const { userId, testId, answers } = req.body;
@@ -393,7 +364,6 @@ exports.scoreEssayQuestion = async (req, res) => {
   }
 };
 
-// ========================= MC/RADIO/CHECKBOX SCORING =========================
 exports.scoreMCQuestion = async (req, res) => {
   try {
     const attemptId = Number(req.params.attemptId);
@@ -415,13 +385,11 @@ exports.scoreMCQuestion = async (req, res) => {
       [questionId]: Number(score),
     };
 
-    // Total dari essay scores
     const totalEssay = Object.values(existingEssayScores).reduce(
       (sum, s) => sum + Number(s),
       0
     );
 
-    // Total dari mc manual scores
     const totalMc = Object.values(updatedMcScores).reduce(
       (sum, s) => sum + Number(s),
       0

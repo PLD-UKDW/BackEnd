@@ -202,7 +202,6 @@ const createMahasiswa = async (req, res, next) => {
             return res.status(400).json({ message: "Ada kategori yang tidak ditemukan" });
         }
 
-        // Masukkan ke pivot mahasiswa_kategori_disabilitas
         for (const k of kategoriDB) {
             await prisma.mahasiswaKategoriDisabilitas.create({
                 data: {
@@ -212,7 +211,6 @@ const createMahasiswa = async (req, res, next) => {
             });
         }
 
-        // Tentukan jenis otomatis
         let jenisToInsert;
 
         if (kategoriDB.length === 1) {
@@ -224,7 +222,6 @@ const createMahasiswa = async (req, res, next) => {
             jenisToInsert = jenisGanda.id;
         }
 
-        // Masukkan ke pivot mahasiswa_jenis_disabilitas
         await prisma.mahasiswaJenisDisabilitas.create({
             data: {
                 mahasiswa_id: mahasiswa.id,
@@ -463,6 +460,25 @@ const getAllKategoriDisabilitas = async (req, res) => {
     }
 };
 
+const getAllKategoriDisabilitasAdmin = async (_req, res) => {
+    try {
+        const data = await prisma.kategoriDisabilitas.findMany({
+            orderBy: { kategori: "asc" },
+            select: {
+                id: true,
+                kategori: true,
+                jenis_disabilitas_id: true,
+                jenisDisabilitas: { select: { id: true, jenis: true } },
+            },
+        });
+
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memuat kategori disabilitas" });
+    }
+};
+
 const getAllJenisDisabilitas = async (_req, res) => {
     try {
         const data = await prisma.jenisDisabilitas.findMany({
@@ -506,6 +522,144 @@ const createKategoriDisabilitas = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Gagal menambahkan kategori disabilitas" });
+    }
+};
+
+const recalculateMahasiswaJenis = async (mahasiswaId) => {
+    const remaining = await prisma.mahasiswaKategoriDisabilitas.findMany({
+        where: { mahasiswa_id: Number(mahasiswaId) },
+        include: {
+            kategori: {
+                select: {
+                    id: true,
+                    jenis_disabilitas_id: true,
+                },
+            },
+        },
+    });
+
+    await prisma.mahasiswaJenisDisabilitas.deleteMany({
+        where: { mahasiswa_id: Number(mahasiswaId) },
+    });
+
+    if (remaining.length === 0) {
+        return;
+    }
+
+    let jenisToInsert;
+    if (remaining.length === 1) {
+        jenisToInsert = remaining[0].kategori.jenis_disabilitas_id;
+    } else {
+        const jenisGanda = await prisma.jenisDisabilitas.findFirst({
+            where: { jenis: "Ganda" },
+            select: { id: true },
+        });
+        jenisToInsert = jenisGanda?.id;
+    }
+
+    if (jenisToInsert) {
+        await prisma.mahasiswaJenisDisabilitas.create({
+            data: {
+                mahasiswa_id: Number(mahasiswaId),
+                jenis_id: Number(jenisToInsert),
+            },
+        });
+    }
+};
+
+const updateKategoriDisabilitas = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { kategori, jenis_id } = req.body;
+
+        if (!id || Number.isNaN(id)) {
+            return res.status(400).json({ message: "ID kategori tidak valid" });
+        }
+        if (!kategori || !String(kategori).trim()) {
+            return res.status(400).json({ message: "Nama kategori wajib diisi" });
+        }
+        if (!jenis_id || Number.isNaN(Number(jenis_id))) {
+            return res.status(400).json({ message: "jenis_id wajib diisi" });
+        }
+
+        const existing = await prisma.kategoriDisabilitas.findUnique({ where: { id } });
+        if (!existing) {
+            return res.status(404).json({ message: "Kategori tidak ditemukan" });
+        }
+
+        const jenis = await prisma.jenisDisabilitas.findUnique({ where: { id: Number(jenis_id) } });
+        if (!jenis) {
+            return res.status(404).json({ message: "Jenis disabilitas tidak ditemukan" });
+        }
+
+        const duplicate = await prisma.kategoriDisabilitas.findFirst({
+            where: {
+                kategori: String(kategori).trim(),
+                NOT: { id },
+            },
+        });
+        if (duplicate) {
+            return res.status(409).json({ message: "Nama kategori sudah digunakan" });
+        }
+
+        const updated = await prisma.kategoriDisabilitas.update({
+            where: { id },
+            data: {
+                kategori: String(kategori).trim(),
+                jenis_disabilitas_id: Number(jenis_id),
+            },
+            select: {
+                id: true,
+                kategori: true,
+                jenis_disabilitas_id: true,
+            },
+        });
+
+        const impactedMahasiswa = await prisma.mahasiswaKategoriDisabilitas.findMany({
+            where: { kategori_id: id },
+            select: { mahasiswa_id: true },
+            distinct: ["mahasiswa_id"],
+        });
+
+        for (const row of impactedMahasiswa) {
+            await recalculateMahasiswaJenis(row.mahasiswa_id);
+        }
+
+        res.json({ message: "Kategori disabilitas berhasil diperbarui", kategori: updated });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memperbarui kategori disabilitas" });
+    }
+};
+
+const deleteKategoriDisabilitas = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!id || Number.isNaN(id)) {
+            return res.status(400).json({ message: "ID kategori tidak valid" });
+        }
+
+        const existing = await prisma.kategoriDisabilitas.findUnique({ where: { id } });
+        if (!existing) {
+            return res.status(404).json({ message: "Kategori tidak ditemukan" });
+        }
+
+        const usedCount = await prisma.mahasiswaKategoriDisabilitas.count({
+            where: { kategori_id: id },
+        });
+        if (usedCount > 0) {
+            return res.status(409).json({
+                message: "Kategori disabilitas sedang digunakan dan tidak bisa dihapus",
+                usedCount,
+            });
+        }
+
+        await prisma.kategoriDisabilitas.delete({ where: { id } });
+
+        res.json({ message: "Kategori disabilitas berhasil dihapus" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal menghapus kategori disabilitas" });
     }
 };
 
@@ -607,8 +761,11 @@ module.exports = {
     getAllFakultas,
     getProdiByFakultas,
     getAllKategoriDisabilitas,
+    getAllKategoriDisabilitasAdmin,
     getAllJenisDisabilitas,
     createKategoriDisabilitas,
+    updateKategoriDisabilitas,
+    deleteKategoriDisabilitas,
     getAllAngkatan,
     // addFakultas,
     // addProdi

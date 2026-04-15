@@ -34,7 +34,7 @@ const login = async (req, res) => {
           });
             await transporter.sendMail({
                 from: process.env.EMAIL_USER,
-                to: "kkngondangukdw@gmail.com",
+                to: "uld@staff.ukdw.ac.id",
                 subject: "OTP Login Admin",
                 html: `
                     <h3>OTP Login Admin</h3>

@@ -1,10 +1,6 @@
 // src/controllers/testController.js
 const prisma = require("../utils/prisma");
 
-/**
- * List semua test
- * GET /api/test
- */
 // async function listTests(req, res) {
 //   try {
 //     const tests = await prisma.test.findMany({
@@ -52,10 +48,6 @@ async function listTests(req, res) {
   res.json(result);
 }
 
-/**
- * Ambil test & soal (tanpa jawaban benar)
- * GET /api/test/:testId
- */
 async function getTest(req, res) {
   try {
     const testId = Number(req.params.testId);
@@ -72,7 +64,6 @@ async function getTest(req, res) {
 
     if (!test) return res.status(404).json({ message: "Test not found" });
 
-    // Jangan kirim jawaban benar ke frontend
     const questions = test.questions.map((q) => ({
       id: q.id,
       text: q.text,
@@ -93,10 +84,6 @@ async function getTest(req, res) {
   }
 }
 
-/**
- * Submit jawaban
- * POST /api/test/:testId/submit
- */
 async function submitTest(req, res) {
   try {
     const userId = req.user.id;
@@ -136,25 +123,19 @@ async function submitTest(req, res) {
       where: { userId_testId: { userId, testId } },
     });
 
-    // ============================================================
-    // 1. Hitung AUTOMATIC SCORE (MULTIPLE_CHOICE only)
-    // ============================================================
     let autoScore = 0;
 
-    // huruf ke index angka
     const letterToIndex = { a: 0, b: 1, c: 2, d: 3 };
 
     test.questions.forEach((q) => {
       if (q.questionType !== "MULTIPLE_CHOICE") return;
 
-      // Ambil jawaban user (handle key number & string)
       const submittedLetter = answers[q.id] ?? answers[String(q.id)];
       if (!submittedLetter) return;
 
-      const submitted = submittedLetter.toLowerCase(); // 'a'
-      const correct = String(q.answer).toLowerCase(); // 'a', 'b', 'c', 'd'
+      const submitted = submittedLetter.toLowerCase(); 
+      const correct = String(q.answer).toLowerCase(); 
 
-      // Compare direct letter-to-letter
       if (submitted === correct) {
         autoScore += Number(q.autoScore || 1);
       }
@@ -162,9 +143,6 @@ async function submitTest(req, res) {
 
     const now = new Date();
 
-    // ===============================
-    // CASE 1 — DIGITAL LITERACY
-    // ===============================
     if (test.type === "DIGITAL_LITERACY") {
       const minScore = Math.ceil(test.questions.length * 0.7);
       const autoPass = autoScore >= minScore ? "PASS" : "FAIL";
@@ -203,10 +181,6 @@ async function submitTest(req, res) {
       });
     }
 
-    // ===============================
-    // CASE 2 — COLLEGE READINESS
-    // ===============================
-    // Essay tidak dinilai, Admin ULD yang mengisi manualScore.
     const attempt = existing
       ? await prisma.attempt.update({
           where: { id: existing.id },
@@ -215,7 +189,7 @@ async function submitTest(req, res) {
             autoScore,
             manualScore: null,
             finalScore: null,
-            passStatus: null, // pending
+            passStatus: null,
             completedAt: now,
             gradedAt: null,
           },
@@ -245,10 +219,6 @@ async function submitTest(req, res) {
   }
 }
 
-/**
- * Cek status: apakah user sudah menyelesaikan kedua test wajib
- * GET /api/test/status
- */
 async function getStatus(req, res) {
   try {
     // const userId = req.user.userId;

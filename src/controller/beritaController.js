@@ -4,10 +4,20 @@ const prisma = require("../utils/prisma");
 const fs = require("fs");
 const path = require("path");
 
-const deleteFile = (filePath) => {
-    if (!filePath) return;
+const parseImageNames = (contentImages) => {
+    if (!contentImages) return [];
+    return String(contentImages)
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => path.basename(item));
+};
 
-    const realPath = path.join(__dirname, "..", "..", "uploads", "berita", filePath);
+const deleteFile = (fileName) => {
+    if (!fileName) return;
+
+    const safeName = path.basename(fileName);
+    const realPath = path.join(__dirname, "..", "..", "uploads", "berita", safeName);
     if (fs.existsSync(realPath)) {
         fs.unlinkSync(realPath);
     }
@@ -17,7 +27,6 @@ const createBerita = async (req, res, next) => {
     try {
         const { title, content, categoryId, tanggal, lokasi, isPublished } = req.body;
 
-        // Handle multiple images - combine all uploaded files into comma-separated string
         let imageString = "";
         if (req.files && req.files.length > 0) {
             imageString = req.files.map(f => f.filename).join(',');
@@ -30,7 +39,6 @@ const createBerita = async (req, res, next) => {
             return res.status(400).json({ message: "categoryId tidak valid" });
         }
 
-        // Validate that category exists if provided
         if (categoryIdNum) {
             const category = await prisma.beritaCategory.findUnique({
                 where: { id: categoryIdNum },
@@ -74,10 +82,6 @@ const getBeritaAdmin = async (req, res, next) => {
             },
         });
 
-        if(berita.length === 0){
-            return res.status(404).json({ message: "Berita tidak ditemukan" });
-        }
-        
         res.json({ total: berita.length, data: berita });
     } catch (err) {
         res.status(500).json({ error: "Gagal mengambil berita admin" });
@@ -130,10 +134,6 @@ const getBeritaPublic = async (req, res, next) => {
                 createdAt: true,
             }
         });
-
-        if(berita.length === 0){
-            return res.status(404).json({ message: "Berita tidak ditemukan" });
-        }
 
         res.json({ total: berita.length, data: berita });
     } catch (err) {
@@ -286,7 +286,13 @@ const deleteBerita = async (req, res, next) => {
         if (!berita) {
             return res.status(404).json({ message: "Berita tidak ditemukan" });
         }
-        deleteFile(berita.content_images);
+        const imageNames = parseImageNames(berita.content_images);
+        imageNames.forEach((fileName) => {
+            try {
+                deleteFile(fileName);
+            } catch {}
+        });
+
         await prisma.berita.delete({ where: { id: Number(id) } });
 
         res.status(204).send();
@@ -296,9 +302,6 @@ const deleteBerita = async (req, res, next) => {
     }
 }
 
-// =============================
-// Kategori Berita
-// =============================
 const getBeritaCategories = async (_req, res) => {
     try {
         const categories = await prisma.beritaCategory.findMany({ orderBy: { name: "asc" } });
@@ -323,6 +326,72 @@ const createBeritaCategory = async (req, res) => {
     }
 };
 
+const updateBeritaCategory = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { name } = req.body;
+
+        if (!id || Number.isNaN(id)) {
+            return res.status(400).json({ message: "ID kategori tidak valid" });
+        }
+        if (!name || !String(name).trim()) {
+            return res.status(400).json({ message: "Nama kategori wajib diisi" });
+        }
+
+        const existing = await prisma.beritaCategory.findUnique({ where: { id } });
+        if (!existing) {
+            return res.status(404).json({ message: "Kategori tidak ditemukan" });
+        }
+
+        const duplicate = await prisma.beritaCategory.findFirst({
+            where: {
+                name: String(name).trim(),
+                NOT: { id },
+            },
+        });
+        if (duplicate) {
+            return res.status(409).json({ message: "Nama kategori sudah digunakan" });
+        }
+
+        const updated = await prisma.beritaCategory.update({
+            where: { id },
+            data: { name: String(name).trim() },
+        });
+
+        res.json({ message: "Kategori berita berhasil diperbarui", category: updated });
+    } catch (err) {
+        res.status(500).json({ error: "Gagal memperbarui kategori berita" });
+    }
+};
+
+const deleteBeritaCategory = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!id || Number.isNaN(id)) {
+            return res.status(400).json({ message: "ID kategori tidak valid" });
+        }
+
+        const existing = await prisma.beritaCategory.findUnique({ where: { id } });
+        if (!existing) {
+            return res.status(404).json({ message: "Kategori tidak ditemukan" });
+        }
+
+        const usedCount = await prisma.berita.count({ where: { categoryId: id } });
+        if (usedCount > 0) {
+            return res.status(409).json({
+                message: "Kategori sedang digunakan oleh berita dan tidak bisa dihapus",
+                usedCount,
+            });
+        }
+
+        await prisma.beritaCategory.delete({ where: { id } });
+
+        res.json({ message: "Kategori berita berhasil dihapus" });
+    } catch (err) {
+        res.status(500).json({ error: "Gagal menghapus kategori berita" });
+    }
+};
+
 module.exports = {
     createBerita,
     getBeritaAdmin,
@@ -335,4 +404,6 @@ module.exports = {
     unpublishBerita,
     getBeritaCategories,
     createBeritaCategory,
+    updateBeritaCategory,
+    deleteBeritaCategory,
 };
